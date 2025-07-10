@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { PaginationDto } from './dto/pagination.dto';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 
 @Injectable()
@@ -19,9 +20,34 @@ export class TransactionService {
     return createdTransaction;
   }
 
-  async findAll() {
-    const transactions = await this.prisma.transaction.findMany();
-    return transactions;
+  async findAll(paginationDto: PaginationDto) {
+    const { skip = 0, take = 10 } = paginationDto;
+    
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        skip,
+        take,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.transaction.count(),
+    ]);
+    
+    return {
+      data: transactions,
+      meta: {
+        total,
+        skip,
+        take,
+        page: Math.floor(skip / take) + 1,
+        totalPages: Math.ceil(total / take),
+      },
+    };
+  }
+
+  async count() {
+    return await this.prisma.transaction.count();
   }
 
   async findOne(id: string) {
