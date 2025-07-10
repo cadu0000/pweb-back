@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3333:3333"
+    environment:
+      - DATABASE_URL=file:./prisma/db/dev.db
+      - NODE_ENV=development
+      - PORT=3333
+      - PRISMA_CLIENT_ENGINE_TYPE=binary
+    volumes:
+      - ./prisma/db:/app/prisma/db
+    command: sh -c "pnpm prisma migrate deploy && pnpm run start:prod" 
